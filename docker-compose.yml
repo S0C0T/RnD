@@ -2,15 +2,14 @@ version: '3.8'
 
 services:
   openwebrx:
-    image: jketterl/openwebrx:latest
+    # Using an image variant that features extensive HackRF driver integrations
+    image: slechev/openwebrxplus:latest
     container_name: openwebrx
-    # Forces the container to always auto-start on boot, crash, or system restart
     restart: always
-    # Bypasses the virtual bridge network layer so Tailscale can reach port 8073 directly
     network_mode: host
-    # Explicitly maps the physical USB bus hardware layer into the container
+    # Grant full device manipulation capabilities to bypass Raspberry Pi USB locking
+    privileged: true
     devices:
       - "/dev/bus/usb:/dev/bus/usb"
-    # Mounts a local volume so OpenWebRX configuration settings survive software updates
     volumes:
       - ./openwebrx_data:/var/lib/openwebrx
