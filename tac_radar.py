@@ -89,18 +89,25 @@ async def main():
     
     while True:
         # Initiate a 5-second radio sweep
-        devices = await BleakScanner.discover(timeout=5.0)
-        device_count = len(devices)
+                # Initiate a 5-second radio sweep
+        # we use return_adv=True to get the advertisement data containing the RSSI
+        devices_dict = await BleakScanner.discover(timeout=5.0, return_adv=True)
+        device_count = len(devices_dict)
         
         print(f"\n--- 📡 Sweep Complete: {datetime.now().strftime('%H:%M:%S')} | Detected: {device_count} Signals ---")
         
-        for dev in devices:
-            # Process logging metrics
-            log_preview = update_log_and_registry(dev.address, dev.name, dev.rssi)
+        # devices_dict contains { mac_address: (BLEDevice, AdvertisementData) }
+        for address, (dev, adv) in devices_dict.items():
+            # Safely grab the RSSI from advertisement data
+            rssi_val = adv.rssi if adv.rssi is not None else -100
+            
+            # Process logging metrics using the new rssi_val
+            log_preview = update_log_and_registry(dev.address, dev.name, rssi_val)
             print(log_preview)
             
             # Commit tracking parameters to the raw PCAP file
-            write_to_pcap(PCAP_FILE, dev.address, dev.rssi)
+            write_to_pcap(PCAP_FILE, dev.address, rssi_val)
+
             
         # Threat evaluation matrix assessment
         if device_count >= FORCE_THRESHOLD:
